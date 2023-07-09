@@ -2,11 +2,13 @@ import org.junit.jupiter.api.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collector;
 
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,15 +17,15 @@ import static org.junit.jupiter.api.Assertions.*;
  * This chapter will introduce you to the basics of Reactor.
  * You will learn how to retrieve result from Mono and Flux
  * in different ways.
- *
+ * <p>
  * Read first:
- *
+ * <p>
  * https://projectreactor.io/docs/core/release/reference/#intro-reactive
  * https://projectreactor.io/docs/core/release/reference/#reactive.subscribe
  * https://projectreactor.io/docs/core/release/reference/#_subscribe_method_examples
- *
+ * <p>
  * Useful documentation:
- *
+ * <p>
  * https://projectreactor.io/docs/core/release/reference/#which-operator
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html
  * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html
@@ -41,7 +43,8 @@ public class c1_Introduction extends IntroductionBase {
     public void hello_world() {
         Mono<String> serviceResult = hello_world_service();
 
-        String result = null; //todo: change this line only
+        String result = serviceResult.block();
+        //todo: change this line only
 
         assertEquals("Hello World!", result);
     }
@@ -55,7 +58,7 @@ public class c1_Introduction extends IntroductionBase {
         Exception exception = assertThrows(IllegalStateException.class, () -> {
             Mono<String> serviceResult = unresponsiveService();
 
-            String result = null; //todo: change this line only
+            String result = serviceResult.block(Duration.ofSeconds(1)); //todo: change this line only
         });
 
         String expectedMessage = "Timeout on blocking read for 1";
@@ -72,7 +75,7 @@ public class c1_Introduction extends IntroductionBase {
     public void empty_service() {
         Mono<String> serviceResult = emptyService();
 
-        Optional<String> optionalServiceResult = null; //todo: change this line only
+        Optional<String> optionalServiceResult = serviceResult.blockOptional(); //todo: change this line only
 
         assertTrue(optionalServiceResult.isEmpty());
         assertTrue(emptyServiceIsCalled.get());
@@ -81,7 +84,7 @@ public class c1_Introduction extends IntroductionBase {
     /**
      * Many services return more than one result and best services supports streaming!
      * It's time to introduce Flux, an Asynchronous Sequence of 0-N Items.
-     *
+     * <p>
      * Service we are calling returns multiple items, but we are interested only in the first one.
      * Retrieve first item from this Flux by blocking indefinitely until a first item is received.
      */
@@ -103,7 +106,7 @@ public class c1_Introduction extends IntroductionBase {
     public void fortune_top_five() {
         Flux<String> serviceResult = fortuneTop5();
 
-        List<String> results = emptyList(); //todo: change this line only
+        List<String> results = serviceResult.collectList().block(); //todo: change this line only
 
         assertEquals(Arrays.asList("Walmart", "Amazon", "Apple", "CVS Health", "UnitedHealth Group"), results);
         assertTrue(fortuneTop5ServiceIsCalled.get());
@@ -127,9 +130,8 @@ public class c1_Introduction extends IntroductionBase {
         Flux<String> serviceResult = fortuneTop5();
 
         serviceResult
-                .doOnNext(companyList::add)
+                .subscribe(companyList::add);
         //todo: add an operator here, don't use any blocking operator!
-        ;
 
         Thread.sleep(1000); //bonus: can you explain why this line is needed?
 
@@ -151,7 +153,7 @@ public class c1_Introduction extends IntroductionBase {
         AtomicReference<Boolean> serviceCallCompleted = new AtomicReference<>(false);
         CopyOnWriteArrayList<String> companyList = new CopyOnWriteArrayList<>();
 
-        fortuneTop5()
+        fortuneTop5();
         //todo: change this line only
         ;
 
