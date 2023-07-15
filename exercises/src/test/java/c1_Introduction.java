@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collector;
 
 import static java.util.Collections.emptyList;
@@ -76,7 +78,6 @@ public class c1_Introduction extends IntroductionBase {
         Mono<String> serviceResult = emptyService();
 
         Optional<String> optionalServiceResult = serviceResult.blockOptional(); //todo: change this line only
-
         assertTrue(optionalServiceResult.isEmpty());
         assertTrue(emptyServiceIsCalled.get());
     }
@@ -92,7 +93,7 @@ public class c1_Introduction extends IntroductionBase {
     public void multi_result_service() {
         Flux<String> serviceResult = multiResultService();
 
-        String result = serviceResult.toString(); //todo: change this line only
+        String result = serviceResult.blockFirst(); //todo: change this line only
 
         assertEquals("valid result", result);
     }
@@ -152,10 +153,10 @@ public class c1_Introduction extends IntroductionBase {
     public void leaving_blocking_world_behind() throws InterruptedException {
         AtomicReference<Boolean> serviceCallCompleted = new AtomicReference<>(false);
         CopyOnWriteArrayList<String> companyList = new CopyOnWriteArrayList<>();
-
-        fortuneTop5();
+        fortuneTop5().subscribe(companyList::add);
+        serviceCallCompleted.set(true);
         //todo: change this line only
-        ;
+
 
         Thread.sleep(1000);
 
